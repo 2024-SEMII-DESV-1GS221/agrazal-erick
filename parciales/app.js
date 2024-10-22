@@ -15,26 +15,50 @@ const App = (() => {
   }
 
   const utils = {
+    clearResponse() {
+      htmlElements.responseContainer.innerHTML = '';
+    },
+    getCurrentNumbers() {
+      const randomNumbersTags = document.querySelectorAll('.js-random-number');
+      return Object.values(randomNumbersTags).map(e => Number(e.dataset.id));
+    },
+    randomNumbersBetween(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    },
     renderNumber(n) {
       htmlElements.responseContainer.innerHTML += templates.card(n);
+    },
+    randomNumberThatDoesntExist(min, max, arr) {
+      let random = utils.randomNumbersBetween(min, max);
+      if (arr.length >= max - min + 1) {
+        return null;
+      }
+      while (arr.includes(random)) {
+        random = utils.randomNumbersBetween(min, max);
+      }
+      return random;
     }
   }
 
   const handlers = {
     onGenerate(e) {
       e.preventDefault();
-      const randomNumberBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
-      const random = randomNumberBetween(1, 99);
+      const MIN = 1;
+      const MAX = 99;
+      const random = utils.randomNumberThatDoesntExist(MIN, MAX, utils.getCurrentNumbers());
+      if (random === null) {
+        alert('Ya no hay más números por generar');
+        return;
+      }
       utils.renderNumber(random);
     },
     onSort(asc=false) {
       return (e) => {
-        console.log('onSort', asc);
         e.preventDefault();
-        const randomNumbersTags = document.querySelectorAll('.js-random-number');
-        console.log({ randomNumbersTags });
-        const randomNumber = Object.values(randomNumbersTags).map(e => e.data('id'));
-        const sorted = asc ? randomNumber.sort((a, b) => a - b) : randomNumber.sort((a, b) => b - a);
+        const randomNumbers = utils.getCurrentNumbers();
+        const factor = asc ? 1 : -1;
+        const sorted = randomNumbers.sort((a, b) => a * factor  - b * factor);
+        utils.clearResponse();
         sorted.forEach(element => {
           utils.renderNumber(element); 
         });
@@ -55,4 +79,4 @@ const App = (() => {
   };
 })();
 
-document.addEventListener('DOMContentLoaded', App.init);
+App.init();
